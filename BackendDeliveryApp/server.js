@@ -39,18 +39,22 @@ wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const data = JSON.parse(message);
     if (data.type === 'newOrder') {
-      if(clients.hasOwnProperty(data.orderId)){
-        clients[data.orderId] = ws;
-      } else {
-        console.log('New order', "Order id: ", data.orderId, "Status: pending");
-        const newOrder = new Order({ orderId: data.orderId, status: 'pending' });
-        await newOrder.save();
-  
-        clients[data.orderId] = ws;
-  
-        ws.send(JSON.stringify({ status: 'pending' }));
-      }
-    }
+    for (let i = 0; i < data.currentOrderList.length; i++) {
+      let orderId = data.currentOrderList[i]
+
+        if (clients.hasOwnProperty(orderId)) {
+          clients[orderId] = ws;
+        } else {
+          console.log('New order', "Order id: ", orderId, "Status: pending");
+          const newOrder = new Order({ orderId: orderId, status: 'pending' });
+          await newOrder.save();
+
+          clients[orderId] = ws;
+
+          ws.send(JSON.stringify({ status: 'pending' }));
+        }
+
+    }}
 
     if (data.type === 'updateOrder') {
       const { orderId, status } = data;
